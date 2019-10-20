@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import datetime
+import datetime as dt
 
 training_data=pd.read_csv('sales_train.csv') #date, dateblocknum, shop_id, item_id, item_price, item_cnt_day
 items=pd.read_csv('items.csv') #headers are item_name, item_id, item_category_id
@@ -18,7 +18,7 @@ Use the columns -> date, item_price, and item_cnt_day
 get the avg of item_price and sum the item_cnt_day
 '''
 
-training_data.date=training_data.date.apply(lambda x:datetime.datetime.strptime(x,'%d.%m.%Y'))
+training_data.date=training_data.date.apply(lambda x:dt.datetime.strptime(x,'%d.%m.%Y'))
 #print training_data.info()
 
 converted_train_data_by_month=training_data.groupby(['date_block_num','shop_id','item_id'])['date','item_price','item_cnt_day'].agg({'date':['min','max'],'item_price':'mean','item_cnt_day':'sum'})
