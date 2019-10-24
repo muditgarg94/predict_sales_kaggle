@@ -1,11 +1,20 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import adfuller,acf, pacf
+import datetime as dt
+from statsmodels.tsa.arima_model import ARIMA
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 
+
+def ARModel(diff_ts):
+	model=ARIMA(diff_ts,order=(2,1,0))
+	results_AR=model.fit(disp=-1)
+	plt.plot()
 
 #Dickey-Fuller Test
-def test_stationarity(timeseries):
+def isStationaryDF(timeseries):
     
     #Determing rolling statistics
     rolmean = timeseries.rolling(12).mean()
@@ -29,18 +38,11 @@ def test_stationarity(timeseries):
 
 
 
-# create a differenced series
-def difference(dataset, interval=1):
-    diff = list()
-    print len(dataset)
-    for i in range(interval, len(dataset)):
-        value = dataset[i] - dataset[i - interval]
-        diff.append(value)
-    return pd.Series(diff)
+
 
 # invert differenced forecast
-def inverse_difference(last_ob, value):
-    return value + last_ob
+def inverse_difference(last_observation, value):
+    return value + last_observation
 
 
 training_data=pd.read_csv('sales_train.csv') #date, dateblocknum, shop_id, item_id, item_price, item_cnt_day
@@ -59,8 +61,6 @@ get the sum of item_cnt_day to get itm_cnt_month, take mean of item price
 '''
 training_data['date']=pd.to_datetime(training_data['date'],format='%d.%m.%Y')
 
-#check outliers
-
 
 converted_train_data_by_month=training_data.groupby(['date_block_num','shop_id','item_id']).agg({'item_price':'mean','item_cnt_day':'sum'})
 converted_train_data_by_month.columns=['avg_item_price','item_cnt_month']
@@ -73,6 +73,7 @@ converted_train_data_by_month.reset_index(inplace=True)
 #Analyze the data
 #clubbing the total sales by every month in a year
 total_sales=training_data.groupby(['date_block_num']).agg({'item_cnt_day':'sum'})
+
 '''
 #print total_sales
 plt.xlabel('Time')
@@ -104,16 +105,45 @@ plt.show()
 #This project is a regression based rather than classification
 #Decompose a time series . Test statinarity
 
-#test_stationarity(total_sales.iloc[:,0])
+#isStationaryDF(total_sales.iloc[:,0])
 
 
 # Now remove the trend 
 #diff_total_sales=total_sales.diff()
-#test_stationarity(diff_total_sales.iloc[:,0])
+#isStationaryDF(diff_total_sales.iloc[:,0])
 
 
-diff_total_sales=total_sales.diff(periods=12).fillna(0)
-test_stationarity(diff_total_sales.iloc[:,0])
+diff_total_sales=total_sales.diff(periods=12).dropna(inplace=True)
+#isStationaryDF(diff_total_sales.iloc[:,0])
+
+training_data['month']=training_data['date'].dt.month
+training_data['year']=training_data['date'].dt.year
+training_data=training_data.groupby([col for col in training_data.columns if col not in ['item_cnt_day']],as_index=False)[['item_cnt_day']].sum()
+training_data=training_data.rename(columns={'item_cnt_day':'item_cnt_month'})
+training_data=pd.merge(training_data,items,how='left',on=['item_id'])
+training_data.dropna(inplace=True)
+print training_data.head()
 
 
+test_data['month']=11
+test_data['year']=2015
+test_data['date_block_num']=34
+test_data['clubbed_months']=10
+test_data=pd.merge(test_data,items, how='left',on=['item_id'])
 
+test_data.fillna(0)
+
+print len(training_data)
+print len(test_data)
+
+features=['item_cnt_month','date_block_num','clubbed_months','item_id','shop_id','year','month','item_category_id']
+
+X=training_data[['date_block_num','clubbed_months','item_id','shop_id','year','month','item_category_id']]
+Y=training_data['item_cnt_month']
+
+rf=RandomForestRegressor(n_estimators=25,random_state=4,max_depth=10,n_jobs=-1)
+rf.fit(X,Y)
+rf_pred=rf.predict(X)
+
+#NOt sure if correct
+print mean_squared_error(Y,rf_pred)
