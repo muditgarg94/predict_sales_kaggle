@@ -520,19 +520,21 @@ submission = pd.DataFrame({
     "ID": test.index, 
     "item_cnt_month": Y_test
 })
-submission.to_csv('xgb_submission.csv', index=False)
+submission.to_csv(path[0] +'xgb_submission.csv', index=False)
 
 submission1 = pd.DataFrame({
     "ID": test.index, 
     "item_cnt_month": Y_test1
 })
 
-submission1.to_csv('xgb_submission1.csv', index=False)
+submission1.to_csv(path[0] +'xgb_submission1.csv', index=False)
 # save predictions for an ensemble
 pickle.dump(Y_pred, open('xgb_train.pickle', 'wb'))
 pickle.dump(Y_test, open('xgb_test.pickle', 'wb'))
 pickle.dump(Y_pred1, open('xgb_train1.pickle', 'wb'))
 pickle.dump(Y_test1, open('xgb_test1.pickle', 'wb'))
 
+
+plot_features(model, (10,14))
 
 plot_features(model, (10,14))
