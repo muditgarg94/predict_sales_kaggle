@@ -34,7 +34,7 @@ from sklearn.preprocessing import LabelEncoder
 #ploting
 import seaborn as sns
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 
 #xgboost
 from xgboost import XGBRegressor
@@ -131,8 +131,7 @@ cats['subty_code'] = LabelEncoder().fit_transform(cats['subtyp'])
 cats_n = cats[['item_category_id','type_code', 'subty_code']]
 
 
-len(list(set(test.item_id) - set(test.item_id).intersection(set(train.item_id))))
-, len(list(set(test.item_id))), len(test)
+
 
 #inherited code from source:
 
@@ -249,11 +248,6 @@ time.time() - ts
 ts = time.time()
 matrix = get_fea(matrix, [1,12], ['date_block_num', 'cty_code'])
 time.time() - ts
-
-ts = time.time()
-matrix = get_fea(matrix, [1], ['date_block_num', 'shop_id', 'subty_code'])
-time.time() - ts
-
 ts = time.time()
 matrix = get_fea(matrix, [1], ['date_block_num', 'item_id', 'cty_code'])
 time.time() - ts
@@ -445,22 +439,22 @@ ts = time.time()
 matrix = matrix\
 [[\
 'date_block_num', 'shop_id', 'item_id', 'item_cnt_month', 'cty_code',\
- 'item_category_id', 'type_code', 'subty_code',\
-'item_cnt_month_lag_1', 'item_cnt_month_lag_2', 'item_cnt_month_lag_3',\
-'item_cnt_month_lag_6', 'item_cnt_month_lag_12' ,'date_bave_cnt_lag_1',\
+        'item_category_id', 'type_code', 'subty_code',\
+       'item_cnt_month_lag_1', 'item_cnt_month_lag_2', 'item_cnt_month_lag_3',\
+       'item_cnt_month_lag_6', 'item_cnt_month_lag_12','date_bave_cnt_lag_1',\
        'date_bitem_iave_cnt_lag_1', 'date_bitem_iave_cnt_lag_2',\
        'date_bitem_iave_cnt_lag_3', 'date_bitem_iave_cnt_lag_6',\
        'date_bitem_iave_cnt_lag_12', 'date_bitem_cave_cnt_lag_1',\
        'date_bitem_cave_cnt_lag_12', 'date_bshop_iitem_cave_cnt_lag_1',\
        'date_bshop_iitem_cave_cnt_lag_12', 'date_bshop_itype_cave_cnt_lag_1',\
-       'date_bshop_itype_cave_cnt_lag_12', 'date_bshop_isubty_ave_cnt_lag_1_x',\
+       'date_bshop_itype_cave_cnt_lag_12', 'date_bshop_isubty_ave_cnt_lag_1',\
        'date_bshop_isubty_ave_cnt_lag_12', 'date_bcty_coave_cnt_lag_1',\
-       'date_bcty_coave_cnt_lag_12', 'date_bshop_isubty_ave_cnt_lag_1_y',\
+       'date_bcty_coave_cnt_lag_12',\
        'date_bitem_icty_coave_cnt_lag_1', 'date_btype_cave_cnt_lag_1',\
        'date_bsubty_ave_cnt_lag_1', 'month', 'days', 'delta_price_lag',\
        'delta_price_lag_mnt', 'delta_revenue_lag_1', 'item_shop_last_sale',\
-       'item_last_sale', 'item_shop_first_sale', 'item_first_sale'\
-]]
+       'item_last_sale', 'item_shop_first_sale', 'item_first_sale']\
+]
 
 time.time() - ts
 
@@ -491,8 +485,8 @@ gc.collect();
 ts = time.time()
 
 model = XGBRegressor(
-    max_depth=7,
-    n_estimators=500,
+    max_depth=8,
+    n_estimators=1000,
     min_child_weight=300, 
     colsample_bytree=0.8, 
     subsample=0.8, 
@@ -505,7 +499,7 @@ model.fit(
     eval_metric="rmse", 
     eval_set=[(X_train, Y_train), (X_valid, Y_valid)], 
     verbose=True, 
-    early_stopping_rounds = 5)
+    early_stopping_rounds = 10)
 
 time.time() - ts
 
@@ -520,14 +514,14 @@ submission = pd.DataFrame({
     "ID": test.index, 
     "item_cnt_month": Y_test
 })
-submission.to_csv(path[0] +'xgb_submission.csv', index=False)
+submission.to_csv(path[0] +'submissions\\xgb_submission.csv', index=False)
 
 submission1 = pd.DataFrame({
     "ID": test.index, 
     "item_cnt_month": Y_test1
 })
 
-submission1.to_csv(path[0] +'xgb_submission1.csv', index=False)
+submission1.to_csv(path[0] +'submissions\\xgb_submission1.csv', index=False)
 # save predictions for an ensemble
 pickle.dump(Y_pred, open('xgb_train.pickle', 'wb'))
 pickle.dump(Y_test, open('xgb_test.pickle', 'wb'))
